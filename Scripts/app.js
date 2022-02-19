@@ -3,6 +3,46 @@
 (function()
 {
 
+    /**
+     * This method uses AJAX to open a connection to the url and returns data to the callback function
+     * @param {string} method 
+     * @param {string} url 
+     * @param {functon} callback 
+     */
+    function AjaxRequest(method, url, callback)
+    {
+            // Step 1 - Instantiate An XHR Object
+            let XHR = new XMLHttpRequest();
+
+            // Step 2 - Create An Event Listener For Readystatechange Event
+            XHR.addEventListener("readystatechange", () =>
+            {
+                if(XHR.readyState === 4 && XHR.status === 200)
+                {
+                    callback(XHR.responseText);
+                }
+            });
+
+            //Step 3 Open A Connection To The Server
+            XHR.open(method, url);
+
+            //Step 4 Send The Request To The Server
+            XHR.send();
+    }
+
+    /**
+     * This function loads the header file and injects it into the page
+     * @param {string}s data 
+     * 
+     * 
+     */
+    function LoadHeader(data)
+    {
+        $("header").html(data); // data payload
+        $(`li>a:contains(${document.title})`).addClass("active"); // add a class of 'active'
+        CheckLogin();
+    }
+
     function DisplayAboutPage()
     {
         console.log("About Us Page");
@@ -21,6 +61,8 @@
     function DisplayHomePage()
     {
         console.log("Home Page");
+
+        AjaxRequest("GET", "header.html", LoadHeader);
 
         // jQuery Way / Fattest Memeory FootPrint - We Need The jQuery Library
         $("#AboutUsButton").on("click",function()
@@ -102,13 +144,13 @@
 
 
         let sendButton = document.getElementById("sendButton");
-        let suscribeCheckbox = document.getElementById("suscribeCheckbox");
+        let subcribeCheckbox = document.getElementById("subcribeCheckbox");
 
         sendButton.addEventListener("click", function()
         {
     
 
-            if(suscribeCheckbox.checked)
+            if(subcribeCheckbox.checked)
             {
                 AddContact(fullName,value, contactNumber.value, emailAddress.value);
             }
@@ -118,6 +160,7 @@
     function DisplayContactListPage()
     {
         console.log("Contact-List Page");
+
         if(localStorage.length > 0) //Check If localStorage Has Something In It
         {
             let contactList = document.getElementById("contactList");
@@ -247,6 +290,83 @@
     function DisplayLoginPage()
     {
         console.log("Login Page");
+
+        let messageArea = $("#messageArea");
+        messageArea.hide();
+
+        $("#loginButton").on("click", function()
+        {
+            let success = false;
+
+            //create an empty User Object
+            let newUser = new core.User();
+
+            // use jQuery shortcut to load the users.json file
+            $.get("./Data/users.json", function(data)
+            {
+                // For Every User In The USers.Json File, Loop
+                for (const user of data.users)
+                {
+                    //Check If Username And Password Entered Match With User Data
+                    if (username.value == user.Username && password.value == user.Password)
+                    {
+
+                        console.log("condition pass");
+                        //get the user data from the file and assign it to our empty object
+                        newUser.fromJSON(user);
+                        success = true;
+                        break;
+                    }
+                }
+
+                            //If Username And Password Matches - Success....perform Login Sequence
+                if (success)
+                {
+                // Add User To Session Storage
+                sessionStorage.setItem("user", newUser.serialize());
+
+                // Hide Any Errors
+                messageArea.removeAttr("class").hide();
+
+                //Redirect The User To The Secure Area Of Our Site
+                location.href = "contact-list.html";
+                }
+                else
+                {
+            //Display An Error Message
+                $("#username").trigger("focus").trigger("select");
+                messageArea.addClass("alert alert-danger").text("Error: Invalid Login Indromation.").show();
+                }
+            });
+
+
+            $("#cancelButton").on("click", function()
+            {
+                //Clear The Login Form
+                document.forms[0].reset();
+
+                //Return To Homepage
+                location.href("index.html");
+            });
+        });
+    }
+
+    function CheckLogin()
+    {
+        if(sessionStorage.getItem("user"))
+        {
+            // Swap Out The Login Link For The Logout Link
+            $("#login").html(
+                `<a  id="logout" class="nav-link" aria-current="page" href="login.html"> <i class="fas fa-sign-out-alt"></i> Logout</a>`
+            );
+
+            $("#logout").on("click", function()
+            {
+                sessionStorage.clear();
+
+                location.href("login.html");
+            });
+        }
     }
 
     function DisplayRegisterPage()
@@ -257,7 +377,9 @@
     // named function
     function Start()
     {
-        console.log("App Started!!");     
+        console.log("App Started!!");    
+        
+                AjaxRequest("GET", "header.html", LoadHeader);
 
         switch(document.title)
         {
