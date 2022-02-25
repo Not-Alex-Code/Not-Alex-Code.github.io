@@ -1,10 +1,18 @@
 "use strict";
 (function()
 {
-                //If User Does Not Exist In Session Storage
-                if(!sessionStorage.getItem("user"))
-                {
-                // Redirect To The Login Page
-                location.href = "login.html";
-                }
+    let protected_routes =[
+        "contact-list"
+    ];
+
+    if(protected_routes.indexOf(router.ActiveLink) > -1)
+    {
+        // if user does not exist in session storage
+        if(!sessionStorage.getItem("user"))
+        {
+            // redirect to the login page
+            location.href = "/login";
+        }
+    }
+  
 })();
